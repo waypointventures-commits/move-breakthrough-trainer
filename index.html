@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOVE Breakthrough Trainer</title>
+<style>
+  :root{
+    --bg: #0d0c0b;
+    --surface: #17140f;
+    --surface-2: #1f1b14;
+    --surface-3: #262015;
+    --border: #332d22;
+    --ink: #f3ede1;
+    --ink-dim: #a89e8c;
+    --ink-faint: #6d6656;
+    --accent: #d98f3b;
+    --accent-ink: #2b1b06;
+    --care: #4fa8a0;
+    --breakthrough: #e8c14a;
+    --danger: #b1503f;
+    --font-display: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ margin: 0; padding: 0; background: var(--bg); min-height: 100%; }
+  ::selection{ background: var(--accent); color: var(--accent-ink); }
+
+  .app{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    min-height: 100%;
+    padding: 28px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  button{ font-family: inherit; }
+  a{ color: inherit; }
+
+  /* ---------- intro ---------- */
+  .intro-wrap{
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .intro-card{
+    max-width: 520px;
+    text-align: left;
+  }
+  .intro-card .brand{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+  .intro-card h1{
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 400;
+    text-wrap: balance;
+    margin: 0 0 14px;
+  }
+  .intro-card p{
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-dim);
+    max-width: 56ch;
+    margin: 0 0 26px;
+  }
+  .name-row{ display: flex; gap: 10px; flex-wrap: wrap; }
+  .name-input{
+    flex: 1;
+    min-width: 200px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    padding: 12px 14px;
+    border-radius: 4px;
+  }
+  .name-input:focus-visible{ outline: 2px solid var(--breakthrough); outline-offset: 1px; }
+  .name-input::placeholder{ color: var(--ink-faint); }
+
+  /* ---------- header ---------- */
+  .head{
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+  .head .brand{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .head h1{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(22px, 3.6vw, 32px);
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: 0.01em;
+  }
+  .player-badge{ display: flex; align-items: center; gap: 12px; }
+  .avatar{
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 19px;
+    flex: 0 0 auto;
+  }
+  .player-meta{ font-family: var(--font-mono); text-align: left; }
+  .player-meta .p-name{ font-size: 14px; color: var(--ink); }
+  .player-meta .p-rank{ font-size: 12px; color: var(--breakthrough); }
+  .player-meta .p-day{ font-size: 11px; color: var(--ink-faint); letter-spacing: 0.05em; margin-top: 2px; }
+  .energy-pips{ display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+  .pip{ width: 8px; height: 8px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border); display: inline-block; }
+  .pip.on{ background: var(--accent); border-color: var(--accent); }
+  .reset-btn{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--ink-dim);
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .reset-btn:hover{ border-color: var(--ink-faint); color: var(--ink); }
+  .reset-btn:focus-visible, button:focus-visible, .opt:focus-visible, .action-card:focus-visible, .pick-btn:focus-visible{
+    outline: 2px solid var(--breakthrough);
+    outline-offset: 2px;
+  }
+
+  /* ---------- layout ---------- */
+  .grid{
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 760px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+  }
+  .panel h3{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 14px;
+  }
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 4px;
+  }
+
+  /* ---------- growth map track ---------- */
+  .map-track{ display: flex; gap: 4px; margin-bottom: 22px; }
+  .map-node{ flex: 1; text-align: center; position: relative; padding-top: 20px; }
+  .map-node::before{
+    content: '';
+    position: absolute; top: 7px; left: -50%; width: 100%; height: 1px;
+    background: var(--border);
+  }
+  .map-node:first-child::before{ display: none; }
+  .map-node .dot{
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--surface-2); border: 1.5px solid var(--border);
+  }
+  .map-node.is-current .dot{ background: var(--accent); border-color: var(--accent); }
+  .map-node .m-label{ font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); }
+  .map-node.is-current .m-label{ color: var(--ink); }
+  .map-node .m-sub{ font-size: 10px; color: var(--ink-faint); margin-top: 2px; }
+  .rank-ticks{ display: flex; justify-content: center; gap: 4px; margin-top: 6px; }
+  .rank-ticks span{ width: 5px; height: 5px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border); }
+  .rank-ticks span.on{ background: var(--breakthrough); border-color: var(--breakthrough); }
+
+  /* ---------- hub ---------- */
+  .day-line{ display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .day-line h2{ font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 20px; margin: 0; }
+  .day-line .energy-caption{ font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); }
+  .action-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .action-card{
+    text-align: left;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 14px;
+    cursor: pointer;
+    color: var(--ink);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .action-card .a-title{ font-family: var(--font-display); font-size: 16px; }
+  .action-card .a-desc{ font-size: 12.5px; color: var(--ink-faint); line-height: 1.4; }
+  .action-card .a-cost{ font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--care); margin-top: auto; padding-top: 6px; }
+  .action-card:hover:not(:disabled){ border-color: var(--accent); background: var(--surface-3); }
+  .action-card:disabled{ opacity: 0.4; cursor: not-allowed; }
+  .end-day-row{ margin-top: 14px; text-align: right; }
+
+  /* ---------- pick client ---------- */
+  .pick-list{ display: flex; flex-direction: column; gap: 10px; }
+  .pick-btn{
+    text-align: left;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 13px 15px;
+    cursor: pointer;
+    color: var(--ink);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  .pick-btn:hover{ border-color: var(--accent); background: var(--surface-3); }
+  .pick-btn .p-name{ font-family: var(--font-display); font-size: 15.5px; }
+  .back-link{
+    background: none; border: none; color: var(--ink-faint);
+    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer; padding: 0; margin-bottom: 14px; text-decoration: underline;
+  }
+
+  /* ---------- mood badges ---------- */
+  .mood{ font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 10px; border: 1px solid var(--border); white-space: nowrap; }
+  .mood.thriving{ color: var(--breakthrough); border-color: var(--breakthrough); }
+  .mood.steady{ color: var(--care); border-color: var(--care); }
+  .mood.shaky{ color: var(--danger); border-color: var(--danger); }
+
+  /* ---------- scenario / wheel panel ---------- */
+  .scenario-top{
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .wheel-wrap{ flex: 0 0 auto; }
+  .wheel-wrap svg{ width: 118px; height: 118px; display:block; }
+  .wheel-node circle{
+    fill: var(--surface-2);
+    stroke: var(--border);
+    stroke-width: 1.5;
+    transition: fill .35s ease, stroke .35s ease;
+  }
+  .wheel-node text{
+    font-family: var(--font-mono);
+    font-size: 7.5px;
+    fill: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: fill .35s ease;
+  }
+  .wheel-node.is-active circle{ fill: var(--accent); stroke: var(--accent); }
+  .wheel-node.is-active text{ fill: var(--accent-ink); font-weight: 600; }
+  .wheel-node.is-done circle{ fill: var(--surface-2); stroke: var(--care); }
+  .wheel-node.is-done text{ fill: var(--care); }
+  .wheel-track{ fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
+  .wheel-lm text{ font-family: var(--font-mono); font-size: 7px; fill: var(--ink-faint); letter-spacing: .06em; }
+  .wheel-lm circle{ fill: none; stroke: var(--ink-faint); stroke-width: 1.4; }
+  .wheel-star{ font-size: 15px; fill: var(--ink-faint); transition: fill .4s ease; }
+  .wheel-star.is-lit{ fill: var(--breakthrough); }
+
+  .scenario-meta{ min-width: 160px; flex: 1; }
+  .scenario-meta h2{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 20px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .scenario-meta .client-tag{ font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+
+  .scenario-body{
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 62ch;
+    margin: 14px 0 18px;
+  }
+
+  .stage-prompt{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--care);
+    margin: 0 0 12px;
+  }
+  .stage-prompt .q{
+    font-family: var(--font-body);
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--ink-dim);
+    font-size: 14px;
+    display: block;
+    margin-top: 3px;
+  }
+
+  .options{ display: flex; flex-direction: column; gap: 9px; }
+  .opt{
+    text-align: left;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    line-height: 1.4;
+    padding: 12px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color .15s ease, transform .1s ease, background .15s ease;
+  }
+  .opt:hover{ border-color: var(--accent); background: var(--surface-3); }
+  .opt:active{ transform: scale(0.995); }
+
+  /* ---------- resolution / result cards ---------- */
+  .quad-name{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 23px;
+    margin: 2px 0 10px;
+  }
+  .quad-name.breakthrough{ color: var(--breakthrough); }
+  .quad-name.cozy{ color: var(--care); }
+  .quad-name.stressful{ color: var(--danger); }
+  .quad-name.bored{ color: var(--ink-faint); }
+  .result-text{ font-family: var(--font-display); font-size: 15.5px; line-height: 1.55; max-width: 60ch; }
+  .result-note{ font-family: var(--font-mono); font-size: 12.5px; color: var(--danger); margin-top: 10px; }
+  .primary-btn{
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    padding: 11px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .primary-btn:hover{ filter: brightness(1.08); }
+
+  /* ---------- rank up / setback full takeovers ---------- */
+  .takeover{ text-align: center; padding: 30px 10px; }
+  .takeover .t-eyebrow{ font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .takeover.rankup .t-eyebrow{ color: var(--breakthrough); }
+  .takeover.setback .t-eyebrow{ color: var(--danger); }
+  .takeover h2{ font-family: var(--font-display); font-size: 34px; font-weight: 400; margin: 10px 0; text-wrap: balance; }
+  .takeover p{ font-family: var(--font-display); font-size: 16px; line-height: 1.6; max-width: 52ch; margin: 0 auto 8px; color: var(--ink-dim); }
+  .takeover .unlock-line{ font-family: var(--font-mono); font-size: 13px; color: var(--care); margin-top: 14px; }
+
+  /* ---------- sidebar ---------- */
+  .sidebar{ display: flex; flex-direction: column; gap: 16px; }
+
+  .stat-row{ display: grid; grid-template-columns: 64px 1fr 32px; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .stat-row:last-child{ margin-bottom: 0; }
+  .stat-name{ font-size: 12.5px; color: var(--ink-dim); }
+  .stat-track{ height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+  .stat-fill{ height: 100%; background: var(--accent); border-radius: 3px; transition: width .5s ease; }
+  .stat-val{ font-family: var(--font-mono); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+
+  .quad-plot{ width: 100%; height: auto; }
+  .quad-plot .zone-label{ font-family: var(--font-mono); font-size: 8px; letter-spacing: .04em; text-transform: uppercase; }
+  .quad-plot .axis-label{ font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .06em; text-transform: uppercase; fill: var(--ink-faint); }
+  .quad-dot{ fill: var(--breakthrough); stroke: var(--bg); stroke-width: 2; transition: cx .5s ease, cy .5s ease; }
+
+  .roster-list{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .roster-list li{ display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+  .roster-list .r-name{ color: var(--ink); }
+  .roster-empty{ font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); }
+
+  .rank-block{ display: flex; flex-direction: column; gap: 10px; }
+  .rank-progress-track{ height: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; overflow:hidden; }
+  .rank-progress-fill{ height: 100%; background: var(--care); transition: width .5s ease; }
+  .rank-caption{ font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .skills{ list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .skills li{ font-size: 13px; color: var(--ink-faint); display: flex; gap: 8px; align-items: baseline; }
+  .skills li.unlocked{ color: var(--ink); }
+  .skills li .mark{ font-family: var(--font-mono); font-size: 11px; width: 12px; color: var(--care); }
+
+  .titles-list{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .titles-list li{ font-size: 13px; }
+  .titles-list .t-name{ color: var(--breakthrough); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.03em; }
+  .titles-list .t-desc{ color: var(--ink-faint); font-size: 12px; }
+  .titles-empty{ font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); }
+
+  .log-list{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+  .log-list li{
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    border-left: 2px solid var(--border);
+    padding-left: 9px;
+  }
+  .log-list li.hit{ border-left-color: var(--breakthrough); color: var(--ink-dim); }
+  .log-list li.quit{ border-left-color: var(--danger); }
+
+  /* ---------- toast ---------- */
+  .toast{
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translate(-50%, 12px);
+    background: var(--surface-2);
+    border: 1px solid var(--breakthrough);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 12px 18px;
+    border-radius: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease, transform .3s ease;
+    max-width: 90vw;
+    text-align: center;
+    z-index: 20;
+  }
+  .toast.show{ opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast b{ color: var(--breakthrough); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div id="introSection" class="intro-wrap">
+    <div class="intro-card">
+      <div class="brand">MOVE &middot; Breakthrough Trainer</div>
+      <h1>Your first day as a MOVE coach starts now.</h1>
+      <p>Every day you'll have limited energy to spend &mdash; see clients through their Learnable Moments, train the values that make you a coach, or reflect and recover. Choices carry real weight: lose enough trust and a client walks. Build enough breakthroughs and you rank up the Growth Map.</p>
+      <form id="introForm" class="name-row">
+        <input class="name-input" id="nameInput" type="text" maxlength="24" placeholder="What should we call you, Coach?" autocomplete="off" />
+        <button type="submit" class="primary-btn" style="margin-top:0;">Begin Day 1</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="gameSection" style="display:none;">
+    <div class="head">
+      <div>
+        <div class="brand">MOVE &middot; Breakthrough Trainer</div>
+        <h1 id="headline">Coach the moment. Build the pathway.</h1>
+      </div>
+      <div class="player-badge">
+        <div class="avatar" id="avatarEl">C</div>
+        <div class="player-meta">
+          <div class="p-name" id="pNameEl"></div>
+          <div class="p-rank">Level 01 Coach &middot; <span id="pRankEl">Junior</span></div>
+          <div class="p-day"><span id="pDayEl">Day 1</span><span class="energy-pips" id="pEnergyEl"></span></div>
+        </div>
+        <button class="reset-btn" id="resetBtn" type="button">Restart</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel" id="mainPanel"></div>
+
+      <div class="sidebar">
+        <div class="panel">
+          <h3>5H &mdash; Culture Values</h3>
+          <div id="statRows"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Care &amp; Challenge Quadrant</h3>
+          <svg class="quad-plot" viewBox="0 0 200 150" id="quadSvg">
+            <rect x="10" y="10" width="85" height="65" fill="var(--ink-faint)" opacity="0.08"></rect>
+            <rect x="95" y="10" width="85" height="65" fill="var(--danger)" opacity="0.10"></rect>
+            <rect x="10" y="75" width="85" height="65" fill="var(--care)" opacity="0.10"></rect>
+            <rect x="95" y="75" width="85" height="65" fill="var(--breakthrough)" opacity="0.14"></rect>
+            <text class="zone-label" x="15" y="22" fill="var(--ink-faint)">Bored</text>
+            <text class="zone-label" x="100" y="22" fill="var(--danger)">Stressful</text>
+            <text class="zone-label" x="15" y="140" fill="var(--care)">Cozy</text>
+            <text class="zone-label" x="100" y="140" fill="var(--breakthrough)">Breakthrough</text>
+            <line x1="95" y1="10" x2="95" y2="140" stroke="var(--border)" stroke-width="1"></line>
+            <line x1="10" y1="75" x2="180" y2="75" stroke="var(--border)" stroke-width="1"></line>
+            <text class="axis-label" x="10" y="148">low challenge &#8594; high challenge</text>
+            <text class="axis-label" x="183" y="90" transform="rotate(90 183 90)">low care &#8594; high care</text>
+            <circle class="quad-dot" id="quadDot" cx="52" cy="75" r="5"></circle>
+          </svg>
+        </div>
+
+        <div class="panel">
+          <h3>Client Roster</h3>
+          <ul class="roster-list" id="rosterList"></ul>
+        </div>
+
+        <div class="panel rank-block">
+          <h3>Coach Rank Progress</h3>
+          <div class="rank-caption" id="rankCaption">0 breakthroughs</div>
+          <div class="rank-progress-track"><div class="rank-progress-fill" id="rankFill" style="width:0%"></div></div>
+          <div>
+            <div class="rank-caption" style="margin-bottom:6px;">Master the Craft</div>
+            <ul class="skills" id="skillsList"></ul>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Titles Earned</h3>
+          <ul class="titles-list" id="titlesList"></ul>
+        </div>
+
+        <div class="panel">
+          <h3>Coach Log</h3>
+          <ul class="log-list" id="logList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var STATS = ['heart','hungry','humble','honest','happy'];
+  var STAT_LABEL = { heart:'Heart', hungry:'Hungry', humble:'Humble', honest:'Honest', happy:'Happy' };
+  var STYLE = {
+    comfortable: { care: 7, challenge: -6 },
+    harsh:       { care: -6, challenge: 7 },
+    breakthrough:{ care: 6, challenge: 6 }
+  };
+  var STAGE_ORDER = ['survey','search','design','doit'];
+  var STAGE_META = {
+    survey: { label:'Survey', question:'What am I discovering?', stat:'honest' },
+    search: { label:'Search', question:'Why is this actually happening?', stat:'humble' },
+    design: { label:'Design', question:'What am I gonna do about it?', stat:'hungry' },
+    doit:   { label:'Do It', question:'How do I make sure this actually happens?', stat:'heart' }
+  };
+  var CRAFT_SKILLS = ['Coaching excellence','Client psychology','Communication','Sales confidence','Personal discipline'];
+  var MAX_ENERGY = 3;
+  var RANK_STEPS = [ { count:2, rank:'Senior' }, { count:5, rank:'Lead' } ];
+  var PATHWAY_PREVIEW_AT = 8;
+  var REFERRAL_AT = [3, 6];
+  var CLIENT_SEED_NAMES = ['Maya R.', 'Jordan T.', 'Priya K.'];
+  var REFERRAL_NAMES = ['Theo B.', 'Sam O.', 'Delphine V.', 'Aiko N.', 'Noah F.'];
+
+  var TITLE_DEFS = {
+    'first-breakthrough': { name: 'First Breakthrough', desc: 'Landed your first real Breakthrough Culture moment.' },
+    'full-roster': { name: 'Full Roster', desc: 'Kept every original client through Day 5.' },
+    'bounced-back': { name: 'Bounced Back', desc: 'Landed a Breakthrough right after a Performance Review.' }
+  };
+
+  var TRAIN_FLAVOR = {
+    heart: 'You spend the hour writing a real check-in note for every client on your roster.',
+    hungry: 'You get through three coaching case studies before your alarm even goes off tomorrow.',
+    humble: 'You ask your mentor to critique your worst session this month, on purpose.',
+    honest: 'You rewrite your client agreements so every expectation is explicit, nothing assumed.',
+    happy: 'You actually let yourself enjoy yesterday\'s win for five whole minutes.'
+  };
+
+  var SCENARIOS = [
+    {
+      id: 'vanishing-client',
+      title: 'The Vanishing Client',
+      body: 'They have cancelled three sessions this month, always by text, always ten minutes before. Your calendar still has the name. You are not sure if you should chase it or let it go.',
+      stages: {
+        survey: [
+          { style:'comfortable', text:'They are just busy. It happens to everyone this time of year.' },
+          { style:'harsh', text:'They never had the discipline to stick with this in the first place.' },
+          { style:'breakthrough', text:'They are avoiding me, and I have not asked why.' }
+        ],
+        search: [
+          { style:'comfortable', text:'It is easier to assume it will sort itself out than to bring it up.' },
+          { style:'harsh', text:'Some clients just are not built for accountability. Not my problem to fix.' },
+          { style:'breakthrough', text:'I have been avoiding the hard conversation to keep things comfortable.' }
+        ],
+        design: [
+          { style:'comfortable', text:'Send a friendly "no pressure, whenever you\'re ready!" text.' },
+          { style:'harsh', text:'Tell them plainly that cancelling three times is unacceptable.' },
+          { style:'breakthrough', text:'Call them, name what I have noticed, and ask directly what is going on.' }
+        ],
+        doit: [
+          { style:'comfortable', text:'Put it on the "someday" list and get back to today\'s clients.' },
+          { style:'harsh', text:'Send the message right now, whether they are ready to hear it or not.' },
+          { style:'breakthrough', text:'Tell my mentor I am calling by 5pm today, so someone can check.' }
+        ]
+      }
+    },
+    {
+      id: 'feedback-that-stung',
+      title: 'The Feedback That Stung',
+      body: 'Your manager watched your session recording and said it felt scripted, like you were performing coaching instead of doing it. It stings more because part of you knows they are right.',
+      stages: {
+        survey: [
+          { style:'comfortable', text:'My clients seem happy, so the feedback is probably overblown.' },
+          { style:'harsh', text:'They do not understand how I coach. Everyone has a different style.' },
+          { style:'breakthrough', text:'I have been reciting the framework instead of actually listening.' }
+        ],
+        search: [
+          { style:'comfortable', text:'It is safer to follow the script than risk saying the wrong thing.' },
+          { style:'harsh', text:'I am not going to obsess over one comment from one session.' },
+          { style:'breakthrough', text:'I lean on the script when I am unsure of myself, not when the client needs it.' }
+        ],
+        design: [
+          { style:'comfortable', text:'Nod, say thanks for the feedback, and change nothing.' },
+          { style:'harsh', text:'Overcorrect completely and throw out the framework altogether.' },
+          { style:'breakthrough', text:'Record my next session on purpose and review it with them.' }
+        ],
+        doit: [
+          { style:'comfortable', text:'Mention it again "at some point" if it comes up.' },
+          { style:'harsh', text:'Record it once and decide that is proof enough I have improved.' },
+          { style:'breakthrough', text:'Book 15 minutes next week specifically to review the tape.' }
+        ]
+      }
+    },
+    {
+      id: 'comparison-trap',
+      title: 'The Comparison Trap',
+      body: 'A coach who started the same month as you just hit their client roster goal. You are happy for them. You are also refreshing their content page more than you would like to admit.',
+      stages: {
+        survey: [
+          { style:'comfortable', text:'Comparison is just part of the job, best to ignore it.' },
+          { style:'harsh', text:'They probably got lucky with an easier book of clients.' },
+          { style:'breakthrough', text:'I am measuring my progress by their timeline, not mine.' }
+        ],
+        search: [
+          { style:'comfortable', text:'It is more comfortable to scroll than to look at my own numbers.' },
+          { style:'harsh', text:'I just need to work harder than they do, simple as that.' },
+          { style:'breakthrough', text:'I have not actually asked what they are doing differently.' }
+        ],
+        design: [
+          { style:'comfortable', text:'Post something similar to theirs and hope it lands.' },
+          { style:'harsh', text:'Grind twice as many hours to out-produce them.' },
+          { style:'breakthrough', text:'Ask them directly what has been working, then adapt it to my clients.' }
+        ],
+        doit: [
+          { style:'comfortable', text:'Keep it as a vague goal for "sometime this quarter."' },
+          { style:'harsh', text:'Block every evening this week and call it a plan.' },
+          { style:'breakthrough', text:'Send the message to grab coffee with them this week, calendar it now.' }
+        ]
+      }
+    },
+    {
+      id: 'the-plateau',
+      title: 'The Plateau',
+      body: 'Six weeks in, the scale has not moved and neither has their motivation. They ask you, straight out, if the program is even working.',
+      stages: {
+        survey: [
+          { style:'comfortable', text:'Progress is not always visible on the scale, I will just reassure them.' },
+          { style:'harsh', text:'They are probably not following the plan as closely as they say.' },
+          { style:'breakthrough', text:'They are losing faith in the process because I have not shown them the other data.' }
+        ],
+        search: [
+          { style:'comfortable', text:'It is simpler to give a pep talk than to dig into the actual numbers.' },
+          { style:'harsh', text:'Some people just want results without doing the work.' },
+          { style:'breakthrough', text:'I have been tracking the scale, not the strength gains and habits that actually changed.' }
+        ],
+        design: [
+          { style:'comfortable', text:'Tell them to trust the process and stay patient.' },
+          { style:'harsh', text:'Tell them plainly that plateaus are normal and to push harder.' },
+          { style:'breakthrough', text:'Pull their full data, lifts, sleep, habits, and show what has actually moved.' }
+        ],
+        doit: [
+          { style:'comfortable', text:'Bring it up loosely next time they mention it.' },
+          { style:'harsh', text:'Send a blunt message tonight so it is off my plate.' },
+          { style:'breakthrough', text:'Book 20 minutes before their next session to walk through the data together.' }
+        ]
+      }
+    }
+  ];
+
+  function clamp(n){ return Math.max(0, Math.min(100, n)); }
+  function makeClient(name, ptr){ return { name: name, strikes: 0, mood: 'steady', scenarioPtr: ptr % SCENARIOS.length }; }
+
+  var state = null;
+
+  function freshState(name){
+    return {
+      name: name,
+      day: 1,
+      energy: MAX_ENERGY,
+      usedReflectToday: false,
+      stats: { heart:50, hungry:50, humble:50, honest:50, happy:50 },
+      care: 50,
+      challenge: 50,
+      rank: 'Junior',
+      breakthroughs: 0,
+      referralsGiven: 0,
+      clients: CLIENT_SEED_NAMES.map(function(n, i){ return makeClient(n, i); }),
+      nextReferralIdx: 0,
+      titles: [],
+      hadSetback: false,
+      setbackDemotedFrom: null,
+      recoveryWindow: 0,
+      log: [],
+      screen: 'hub',
+      session: null
+    };
+  }
+
+  var el = {
+    introSection: document.getElementById('introSection'),
+    gameSection: document.getElementById('gameSection'),
+    introForm: document.getElementById('introForm'),
+    nameInput: document.getElementById('nameInput'),
+    headline: document.getElementById('headline'),
+    avatarEl: document.getElementById('avatarEl'),
+    pNameEl: document.getElementById('pNameEl'),
+    pRankEl: document.getElementById('pRankEl'),
+    pDayEl: document.getElementById('pDayEl'),
+    pEnergyEl: document.getElementById('pEnergyEl'),
+    mainPanel: document.getElementById('mainPanel'),
+    statRows: document.getElementById('statRows'),
+    quadDot: document.getElementById('quadDot'),
+    rosterList: document.getElementById('rosterList'),
+    rankCaption: document.getElementById('rankCaption'),
+    rankFill: document.getElementById('rankFill'),
+    skillsList: document.getElementById('skillsList'),
+    titlesList: document.getElementById('titlesList'),
+    logList: document.getElementById('logList'),
+    toast: document.getElementById('toast'),
+    resetBtn: document.getElementById('resetBtn')
+  };
+
+  function showToast(html, ms){
+    el.toast.innerHTML = html;
+    el.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function(){ el.toast.classList.remove('show'); }, ms || 3400);
+  }
+
+  /* ---------------- sidebar rendering ---------------- */
+
+  function renderHeader(){
+    el.avatarEl.textContent = state.name.trim().charAt(0).toUpperCase() || 'C';
+    el.pNameEl.textContent = state.name;
+    el.pRankEl.textContent = state.rank;
+    el.pDayEl.textContent = 'Day ' + state.day + ' · ';
+    el.pEnergyEl.innerHTML = '';
+    for(var i=0;i<MAX_ENERGY;i++){
+      var pip = document.createElement('span');
+      pip.className = 'pip' + (i < state.energy ? ' on' : '');
+      el.pEnergyEl.appendChild(pip);
+    }
+  }
+
+  function renderStats(){
+    el.statRows.innerHTML = STATS.map(function(k){
+      var v = Math.round(state.stats[k]);
+      return '<div class="stat-row">' +
+        '<div class="stat-name">' + STAT_LABEL[k] + '</div>' +
+        '<div class="stat-track"><div class="stat-fill" style="width:' + v + '%"></div></div>' +
+        '<div class="stat-val">' + v + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderQuadrant(){
+    var x = 10 + (state.challenge/100) * 170;
+    var y = 10 + (state.care/100) * 130;
+    el.quadDot.setAttribute('cx', x.toFixed(1));
+    el.quadDot.setAttribute('cy', y.toFixed(1));
+  }
+
+  function moodLabel(c){
+    if(c.strikes >= 1) return { key:'shaky', text: c.strikes >= 2 ? 'Critical' : 'Shaky' };
+    if(c.mood === 'thriving') return { key:'thriving', text:'Thriving' };
+    return { key:'steady', text:'Steady' };
+  }
+
+  function renderRoster(){
+    if(state.clients.length === 0){
+      el.rosterList.innerHTML = '<li class="roster-empty">No active clients.</li>';
+      return;
+    }
+    el.rosterList.innerHTML = state.clients.map(function(c){
+      var m = moodLabel(c);
+      return '<li><span class="r-name">' + c.name + '</span><span class="mood ' + m.key + '">' + m.text + '</span></li>';
+    }).join('');
+  }
+
+  function renderRank(){
+    var next = RANK_STEPS.filter(function(s){ return state.breakthroughs < s.count; })[0];
+    if(next){
+      var prevCount = 0;
+      for(var i=0;i<RANK_STEPS.length;i++){
+        if(RANK_STEPS[i] === next) break;
+        prevCount = RANK_STEPS[i].count;
+      }
+      var pct = clamp(((state.breakthroughs - prevCount) / (next.count - prevCount)) * 100);
+      el.rankFill.style.width = pct + '%';
+      el.rankCaption.textContent = state.breakthroughs + (state.breakthroughs === 1 ? ' breakthrough' : ' breakthroughs') + ' · ' + (next.count - state.breakthroughs) + ' to ' + next.rank;
+    } else {
+      el.rankFill.style.width = '100%';
+      el.rankCaption.textContent = state.breakthroughs + (state.breakthroughs === 1 ? ' breakthrough' : ' breakthroughs') + ' · Lead rank achieved';
+    }
+
+    var unlocked = 1;
+    if(state.rank === 'Senior') unlocked = 3;
+    if(state.rank === 'Lead') unlocked = 4;
+    if(state.breakthroughs >= PATHWAY_PREVIEW_AT) unlocked = 5;
+    el.skillsList.innerHTML = CRAFT_SKILLS.map(function(s, i){
+      var on = i < unlocked;
+      return '<li class="' + (on ? 'unlocked' : '') + '"><span class="mark">' + (on ? '●' : '○') + '</span>' + s + '</li>';
+    }).join('');
+  }
+
+  function renderTitles(){
+    var keys = state.titles;
+    if(keys.length === 0){
+      el.titlesList.innerHTML = '<li class="titles-empty">None yet &mdash; earn one by playing.</li>';
+      return;
+    }
+    el.titlesList.innerHTML = keys.map(function(k){
+      var t = TITLE_DEFS[k];
+      return '<li><div class="t-name">' + t.name + '</div><div class="t-desc">' + t.desc + '</div></li>';
+    }).join('');
+  }
+
+  function renderLog(){
+    el.logList.innerHTML = state.log.slice(-6).reverse().map(function(entry){
+      return '<li class="' + (entry.cls || '') + '">' + entry.text + '</li>';
+    }).join('') || '<li>Nothing logged yet.</li>';
+  }
+
+  function addLog(text, cls){ state.log.push({ text: text, cls: cls || '' }); }
+
+  function renderSidebar(){
+    renderHeader();
+    renderStats();
+    renderQuadrant();
+    renderRoster();
+    renderRank();
+    renderTitles();
+    renderLog();
+  }
+
+  /* ---------------- growth map track ---------------- */
+
+  function mapTrackHtml(){
+    var ticks = ['Junior','Senior','Lead'].map(function(r){
+      return '<span class="' + (r === state.rank ? 'on' : '') + '"></span>';
+    }).join('');
+    var nodes = [
+      { label:'Coach', current:true, sub: '<div class="rank-ticks">' + ticks + '</div>' },
+      { label:'Specialist', current:false, sub:'<div class="m-sub">Locked</div>' },
+      { label:'Leadership', current:false, sub:'<div class="m-sub">Locked</div>' },
+      { label:'Builder', current:false, sub:'<div class="m-sub">Locked</div>' },
+      { label:'Avantej', current:false, sub:'<div class="m-sub">Your Pathway</div>' }
+    ];
+    return '<div class="map-track">' + nodes.map(function(n){
+      return '<div class="map-node' + (n.current ? ' is-current' : '') + '"><div class="dot"></div><div class="m-label">' + n.label + '</div>' + n.sub + '</div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------------- screen: hub ---------------- */
+
+  function goHub(){
+    state.screen = 'hub';
+    state.session = null;
+    render();
+  }
+
+  function renderHub(){
+    el.headline.textContent = 'Day ' + state.day + ' — choose your next move.';
+    var canClient = state.energy > 0 && state.clients.length > 0;
+    var canTrain = state.energy > 0;
+    var canReflect = !state.usedReflectToday;
+
+    var html = mapTrackHtml();
+    html += '<div class="day-line"><h2>Today\'s Board</h2><div class="energy-caption">' + state.energy + ' / ' + MAX_ENERGY + ' energy left</div></div>';
+    html += '<div class="action-grid">';
+    html += '<button type="button" class="action-card" id="actClient" ' + (canClient ? '' : 'disabled') + '>' +
+      '<div class="a-title">See a Client</div>' +
+      '<div class="a-desc">Run a Breakthrough Wheel session with someone on your roster.</div>' +
+      '<div class="a-cost">Cost: 1 energy</div></button>';
+    html += '<button type="button" class="action-card" id="actTrain" ' + (canTrain ? '' : 'disabled') + '>' +
+      '<div class="a-title">Train a Value</div>' +
+      '<div class="a-desc">Drill one of the 5H on your own time. Builds the stat, but costs balance.</div>' +
+      '<div class="a-cost">Cost: 1 energy</div></button>';
+    html += '<button type="button" class="action-card" id="actReflect" ' + (canReflect ? '' : 'disabled') + '>' +
+      '<div class="a-title">Reflect</div>' +
+      '<div class="a-desc">Name what is actually going on. Pulls Care &amp; Challenge back toward center.</div>' +
+      '<div class="a-cost">Cost: free, once per day</div></button>';
+    html += '</div>';
+    html += '<div class="end-day-row"><button type="button" class="primary-btn" id="actEndDay">End the day</button></div>';
+    el.mainPanel.innerHTML = html;
+
+    document.getElementById('actClient').addEventListener('click', function(){ if(canClient) startPickClient(); });
+    document.getElementById('actTrain').addEventListener('click', function(){ if(canTrain) startTrain(); });
+    document.getElementById('actReflect').addEventListener('click', function(){ if(canReflect) doReflect(); });
+    document.getElementById('actEndDay').addEventListener('click', endDay);
+  }
+
+  /* ---------------- screen: pick client ---------------- */
+
+  function startPickClient(){
+    state.screen = 'pickClient';
+    render();
+  }
+
+  function renderPickClient(){
+    el.headline.textContent = 'Who are you seeing today?';
+    var html = '<button type="button" class="back-link" id="backHub">&larr; Back to the day</button>';
+    html += '<div class="pick-list">' + state.clients.map(function(c, i){
+      var m = moodLabel(c);
+      return '<button type="button" class="pick-btn" data-idx="' + i + '"><span class="p-name">' + c.name + '</span><span class="mood ' + m.key + '">' + m.text + '</span></button>';
+    }).join('') + '</div>';
+    el.mainPanel.innerHTML = html;
+    document.getElementById('backHub').addEventListener('click', goHub);
+    Array.prototype.forEach.call(el.mainPanel.querySelectorAll('.pick-btn'), function(btn){
+      btn.addEventListener('click', function(){ startSession(parseInt(btn.getAttribute('data-idx'), 10)); });
+    });
+  }
+
+  /* ---------------- screen: session (breakthrough wheel) ---------------- */
+
+  function startSession(clientIdx){
+    state.energy -= 1;
+    var client = state.clients[clientIdx];
+    var scenario = SCENARIOS[client.scenarioPtr];
+    client.scenarioPtr = (client.scenarioPtr + 1) % SCENARIOS.length;
+    state.session = { clientIdx: clientIdx, scenario: scenario, stageIdx: 0 };
+    state.screen = 'session';
+    render();
+  }
+
+  function renderSession(){
+    var s = state.session;
+    var client = state.clients[s.clientIdx];
+    var key = STAGE_ORDER[s.stageIdx];
+    var meta = STAGE_META[key];
+
+    el.headline.textContent = meta.label + ' — ' + meta.question;
+
+    var wheelSvg = '<svg viewBox="0 0 132 132" aria-hidden="true">' +
+      '<circle class="wheel-track" cx="66" cy="66" r="46"></circle>' +
+      '<g class="wheel-lm"><circle cx="66" cy="14" r="7"></circle><text x="66" y="17" text-anchor="middle">LM</text></g>' +
+      '<text class="wheel-star" id="wheelStar" x="104" y="10">★</text>' +
+      STAGE_ORDER.map(function(k, i){
+        var pos = { survey:[108,42], search:[108,94], design:[24,94], doit:[24,42] }[k];
+        var cls = 'wheel-node' + (i < s.stageIdx ? ' is-done' : (i === s.stageIdx ? ' is-active' : ''));
+        return '<g class="' + cls + '"><circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="13"></circle><text x="' + pos[0] + '" y="' + (pos[1]+2) + '" text-anchor="middle">' + STAGE_META[k].label + '</text></g>';
+      }).join('') +
+      '</svg>';
+
+    var html = '<div class="scenario-top"><div class="wheel-wrap">' + wheelSvg + '</div>' +
+      '<div class="scenario-meta"><p class="eyebrow">' + meta.label + '</p><h2>' + s.scenario.title + '</h2>' +
+      '<div class="client-tag">Client: ' + client.name + '</div></div></div>';
+
+    if(s.stageIdx === 0){
+      html += '<div class="scenario-body">' + s.scenario.body + '</div>';
+    }
+
+    var opts = s.scenario.stages[key];
+    html += '<p class="stage-prompt">' + meta.label + '<span class="q">' + meta.question + '</span></p>';
+    html += '<div class="options">' + opts.map(function(o, i){
+      return '<button type="button" class="opt" data-idx="' + i + '">' + o.text + '</button>';
+    }).join('') + '</div>';
+
+    el.mainPanel.innerHTML = html;
+    Array.prototype.forEach.call(el.mainPanel.querySelectorAll('.opt'), function(btn){
+      btn.addEventListener('click', function(){
+        chooseOption(opts[parseInt(btn.getAttribute('data-idx'), 10)], meta);
+      });
+    });
+  }
+
+  function chooseOption(opt, meta){
+    var d = STYLE[opt.style];
+    state.care = clamp(state.care + d.care);
+    state.challenge = clamp(state.challenge + d.challenge);
+    var amount = opt.style === 'breakthrough' ? 6 : (opt.style === 'harsh' ? -2 : -3);
+    state.stats[meta.stat] = clamp(state.stats[meta.stat] + amount);
+
+    state.session.stageIdx++;
+    if(state.session.stageIdx >= STAGE_ORDER.length){
+      resolveSession();
+    } else {
+      renderSidebar();
+      renderSession();
+    }
+  }
+
+  function quadrantInfo(){
+    var highCare = state.care > 50;
+    var highChallenge = state.challenge > 50;
+    if(highCare && highChallenge) return { key:'breakthrough', name:'Breakthrough Culture', sub:'Empowered', desc:'You brought both. Nothing about that conversation was easy or soft, and the client felt cared for the whole way through. This is the loop that actually moves people.' };
+    if(!highCare && highChallenge) return { key:'stressful', name:'Stressful Culture', sub:'Burned-out', desc:'You pushed hard, but without the care to carry it. Pressure without warmth reads as an attack, not coaching — even when you are technically right.' };
+    if(highCare && !highChallenge) return { key:'cozy', name:'Cozy Culture', sub:'Entitled', desc:'Comfortable, and nothing changed. You protected the relationship but let the real issue sit exactly where you found it.' };
+    return { key:'bored', name:'Bored Culture', sub:'Apathetic', desc:'Low effort, low warmth. This is the version of the conversation that happens when you are just going through the motions.' };
+  }
+
+  function resolveSession(){
+    var s = state.session;
+    var client = state.clients[s.clientIdx];
+    var q = quadrantInfo();
+    var isHit = q.key === 'breakthrough';
+    var note = '';
+    var clientQuitName = null;
+
+    if(isHit){
+      state.stats.happy = clamp(state.stats.happy + 8);
+      state.breakthroughs++;
+      client.strikes = Math.max(0, client.strikes - 1);
+      client.mood = 'thriving';
+
+      if(!state.titles.includes('first-breakthrough')){
+        state.titles.push('first-breakthrough');
+        note = 'Title earned: First Breakthrough.';
+      }
+      if(state.recoveryWindow > 0 && !state.titles.includes('bounced-back')){
+        state.titles.push('bounced-back');
+        note = 'Title earned: Bounced Back.';
+        state.recoveryWindow = 0;
+      }
+      if(REFERRAL_AT.indexOf(state.breakthroughs) !== -1 && state.clients.length < 5 && state.nextReferralIdx < REFERRAL_NAMES.length){
+        var newName = REFERRAL_NAMES[state.nextReferralIdx++];
+        state.clients.push(makeClient(newName, state.clients.length));
+        note = (note ? note + ' ' : '') + newName + ' just joined your roster on referral.';
+      }
+    } else if(q.key === 'stressful' || q.key === 'bored'){
+      client.strikes++;
+      client.mood = 'steady';
+      if(client.strikes >= 2){
+        clientQuitName = client.name;
+        state.clients.splice(s.clientIdx, 1);
+        state.stats.happy = clamp(state.stats.happy - 4);
+        addLog(clientQuitName + ' has ended coaching with you.', 'quit');
+      }
+    }
+
+    if(state.recoveryWindow > 0) state.recoveryWindow--;
+
+    addLog(state.rank + ' · ' + s.scenario.title + ' (' + client.name + ') → ' + q.name, isHit ? 'hit' : '');
+
+    var prevRank = state.rank;
+    RANK_STEPS.forEach(function(step){
+      if(state.breakthroughs >= step.count) state.rank = step.rank;
+    });
+    var rankChanged = state.rank !== prevRank;
+
+    var rosterEmpty = state.clients.length === 0;
+
+    state.screen = 'sessionResult';
+    state.session.result = { q: q, isHit: isHit, clientQuitName: clientQuitName, rosterEmpty: rosterEmpty, rankChanged: rankChanged, prevRank: prevRank, note: note };
+    render();
+  }
+
+  function renderSessionResult(){
+    var r = state.session.result;
+    el.headline.textContent = 'Resolution';
+    var html = '<div class="quad-name ' + r.q.key + '">' + r.q.name + ' <span style="font-size:14px; color:var(--ink-faint); font-style:normal;">(' + r.q.sub + ')</span></div>';
+    html += '<p class="result-text">' + r.q.desc + '</p>';
+    if(r.clientQuitName){
+      html += '<p class="result-note">' + r.clientQuitName + ' has ended coaching with you.</p>';
+    }
+    if(r.note){
+      html += '<p class="result-note" style="color:var(--breakthrough);">' + r.note + '</p>';
+    }
+    var label = r.rosterEmpty ? 'See what happens next' : (r.rankChanged ? 'Continue' : 'Back to the day');
+    html += '<button type="button" class="primary-btn" id="resultNext">' + label + '</button>';
+    el.mainPanel.innerHTML = html;
+
+    document.getElementById('resultNext').addEventListener('click', function(){
+      if(r.rosterEmpty){
+        triggerSetback();
+      } else if(r.rankChanged){
+        showRankup(r.prevRank, state.rank);
+      } else {
+        goHub();
+      }
+    });
+  }
+
+  /* ---------------- screen: train ---------------- */
+
+  function startTrain(){
+    state.screen = 'train';
+    render();
+  }
+
+  function renderTrain(){
+    el.headline.textContent = 'Which value are you drilling today?';
+    var html = '<button type="button" class="back-link" id="backHub">&larr; Back to the day</button>';
+    html += '<div class="options">' + STATS.map(function(k){
+      return '<button type="button" class="opt" data-stat="' + k + '">Train ' + STAT_LABEL[k] + '</button>';
+    }).join('') + '</div>';
+    el.mainPanel.innerHTML = html;
+    document.getElementById('backHub').addEventListener('click', goHub);
+    Array.prototype.forEach.call(el.mainPanel.querySelectorAll('.opt'), function(btn){
+      btn.addEventListener('click', function(){ doTrain(btn.getAttribute('data-stat')); });
+    });
+  }
+
+  function doTrain(statKey){
+    state.energy -= 1;
+    state.stats[statKey] = clamp(state.stats[statKey] + 5);
+    state.challenge = clamp(state.challenge + 4);
+    state.care = clamp(state.care - 3);
+    addLog(state.rank + ' · Trained ' + STAT_LABEL[statKey] + '.');
+    renderSidebar();
+
+    el.headline.textContent = 'Training complete.';
+    var html = '<div class="quad-name" style="color:var(--care);">' + STAT_LABEL[statKey] + ' +5</div>';
+    html += '<p class="result-text">' + TRAIN_FLAVOR[statKey] + '</p>';
+    html += '<button type="button" class="primary-btn" id="trainBack">Back to the day</button>';
+    el.mainPanel.innerHTML = html;
+    document.getElementById('trainBack').addEventListener('click', goHub);
+  }
+
+  /* ---------------- hub action: reflect ---------------- */
+
+  function doReflect(){
+    state.usedReflectToday = true;
+    state.care = clamp(state.care + (50 - state.care) * 0.4);
+    state.challenge = clamp(state.challenge + (50 - state.challenge) * 0.4);
+    state.stats.happy = clamp(state.stats.happy + 3);
+    addLog(state.rank + ' · Took time to reflect.');
+    renderSidebar();
+    renderHub();
+    showToast('You take ten minutes to name what is actually going on. Care and Challenge settle back toward center.', 3400);
+  }
+
+  /* ---------------- day end ---------------- */
+
+  function endDay(){
+    state.day++;
+    state.energy = MAX_ENERGY;
+    state.usedReflectToday = false;
+
+    if(state.day === 5 && state.clients.length >= 3 && CLIENT_SEED_NAMES.every(function(n){ return state.clients.some(function(c){ return c.name === n; }); }) && !state.titles.includes('full-roster')){
+      state.titles.push('full-roster');
+      showToast('<b>Title earned: Full Roster.</b> Every client you started with is still on your books.', 3800);
+    }
+
+    addLog('Day ' + state.day + ' begins.');
+    goHub();
+  }
+
+  /* ---------------- setback / rankup takeovers ---------------- */
+
+  function triggerSetback(){
+    var prevRank = state.rank;
+    if(state.rank === 'Lead'){
+      state.rank = 'Senior';
+      state.breakthroughs = RANK_STEPS[0].count;
+    } else if(state.rank === 'Senior'){
+      state.rank = 'Junior';
+      state.breakthroughs = 0;
+    } else {
+      STATS.forEach(function(k){ state.stats[k] = clamp(state.stats[k] - 8); });
+    }
+
+    var added = [];
+    while(state.clients.length < 2){
+      var nm = REFERRAL_NAMES[state.nextReferralIdx % REFERRAL_NAMES.length];
+      state.nextReferralIdx++;
+      state.clients.push(makeClient(nm, state.clients.length));
+      added.push(nm);
+    }
+
+    state.hadSetback = true;
+    state.recoveryWindow = 2;
+    state.setbackDemotedFrom = prevRank !== state.rank ? prevRank : null;
+    var rankLog = state.setbackDemotedFrom ? 'demoted to ' + state.rank : 'rank held at ' + state.rank;
+    addLog('Performance Review: ' + rankLog + '. ' + added.join(' and ') + ' referred in to rebuild your roster.', 'quit');
+
+    state.screen = 'setback';
+    state.session = null;
+    render();
+  }
+
+  function renderSetback(){
+    el.headline.textContent = 'Performance Review';
+    var html = '<div class="takeover setback">' +
+      '<div class="t-eyebrow">Roster Empty</div>' +
+      '<h2>Every client on your books just walked.</h2>' +
+      '<p>Your manager sits you down. Losing a whole roster in this stretch is not bad luck, it is a pattern &mdash; challenge without enough care behind it, over and over. ' + (state.setbackDemotedFrom ? 'You are being moved back from ' + state.setbackDemotedFrom + ' to ' + state.rank + ' rank while you rebuild trust.' : 'You are staying at ' + state.rank + ' rank while you rebuild trust.') + '</p>' +
+      '<p style="color:var(--ink-faint); font-size:14px;">Two new clients have been referred in so you can start again.</p>' +
+      '<button type="button" class="primary-btn" id="setbackContinue">Start rebuilding</button>' +
+      '</div>';
+    el.mainPanel.innerHTML = html;
+    document.getElementById('setbackContinue').addEventListener('click', goHub);
+  }
+
+  function showRankup(prevRank, newRank){
+    state.screen = 'rankup';
+    state.rankupData = { prevRank: prevRank, newRank: newRank };
+    render();
+  }
+
+  function renderRankup(){
+    var d = state.rankupData;
+    var unlocked = d.newRank === 'Senior' ? CRAFT_SKILLS.slice(1,3) : CRAFT_SKILLS.slice(3,4);
+    el.headline.textContent = 'Rank Up';
+    var html = '<div class="takeover rankup">' +
+      '<div class="t-eyebrow">Coach Rank</div>' +
+      '<h2>' + d.prevRank + ' → ' + d.newRank + '</h2>' +
+      '<p>The breakthroughs are adding up. You are coaching like someone who has actually earned the next rank on the Growth Map.</p>' +
+      '<div class="unlock-line">Unlocked: ' + unlocked.join(', ') + '</div>' +
+      '<button type="button" class="primary-btn" id="rankupContinue">Continue</button>' +
+      '</div>';
+    el.mainPanel.innerHTML = html;
+    document.getElementById('rankupContinue').addEventListener('click', goHub);
+  }
+
+  /* ---------------- router ---------------- */
+
+  function render(){
+    renderSidebar();
+    if(state.screen === 'hub') renderHub();
+    else if(state.screen === 'pickClient') renderPickClient();
+    else if(state.screen === 'session') renderSession();
+    else if(state.screen === 'sessionResult') renderSessionResult();
+    else if(state.screen === 'train') renderTrain();
+    else if(state.screen === 'setback') renderSetback();
+    else if(state.screen === 'rankup') renderRankup();
+  }
+
+  /* ---------------- boot / reset ---------------- */
+
+  function beginGame(name){
+    state = freshState(name || 'Coach');
+    el.introSection.style.display = 'none';
+    el.gameSection.style.display = 'block';
+    addLog('Day 1 begins.');
+    render();
+  }
+
+  el.introForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    beginGame(el.nameInput.value.trim());
+  });
+
+  el.resetBtn.addEventListener('click', function(){
+    el.gameSection.style.display = 'none';
+    el.introSection.style.display = 'flex';
+    el.nameInput.value = '';
+    state = null;
+  });
+})();
+</script>
+</body>
+</html>
