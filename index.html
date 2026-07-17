@@ -454,6 +454,43 @@
   .toast.show{ opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
   .toast b{ color: var(--breakthrough); }
 
+  /* ---------- juice: delta chips, celebration burst, win screen ---------- */
+  .delta-chips{
+    display: flex; gap: 8px; flex-wrap: wrap;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
+    margin: 0 0 14px;
+  }
+  .delta-chips span{
+    border: 1px solid var(--border); border-radius: 10px; padding: 3px 9px;
+    color: var(--ink-dim);
+    animation: chipIn .35s ease both;
+  }
+  .delta-chips span:nth-child(2){ animation-delay: .07s; }
+  .delta-chips span:nth-child(3){ animation-delay: .14s; }
+  .delta-chips span.up{ color: var(--care); border-color: var(--care); }
+  .delta-chips span.down{ color: var(--danger); border-color: var(--danger); }
+  @keyframes chipIn{ from{ opacity: 0; transform: translateY(5px); } to{ opacity: 1; transform: none; } }
+
+  .can-burst{ position: relative; }
+  .burst-dot{
+    position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--breakthrough); pointer-events: none;
+    animation: burst .9s ease-out forwards;
+  }
+  @keyframes burst{
+    from{ opacity: 1; transform: translate(0, 0) scale(1); }
+    to{ opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3); }
+  }
+
+  .takeover.win .t-eyebrow{ color: var(--breakthrough); }
+  .win-stats{ display: flex; gap: 26px; justify-content: center; flex-wrap: wrap; margin: 18px 0 8px; }
+  .win-stats .ws b{ display: block; font-family: var(--font-display); font-size: 30px; font-weight: 400; color: var(--breakthrough); }
+  .win-stats .ws span{ font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
+
+  .reset-btn.confirm{ border-color: var(--danger); color: var(--danger); }
+  .intro-continue{ display: flex; flex-direction: column; gap: 9px; align-items: flex-start; margin-bottom: 20px; }
+  .intro-continue .or{ font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+
   @media (prefers-reduced-motion: reduce){
     *{ transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
   }
@@ -504,18 +541,18 @@
         <div class="panel">
           <h3>Care &amp; Challenge Quadrant</h3>
           <svg class="quad-plot" viewBox="0 0 200 150" id="quadSvg">
-            <rect x="10" y="10" width="85" height="65" fill="var(--ink-faint)" opacity="0.08"></rect>
-            <rect x="95" y="10" width="85" height="65" fill="var(--danger)" opacity="0.10"></rect>
-            <rect x="10" y="75" width="85" height="65" fill="var(--care)" opacity="0.10"></rect>
-            <rect x="95" y="75" width="85" height="65" fill="var(--breakthrough)" opacity="0.14"></rect>
-            <text class="zone-label" x="15" y="22" fill="var(--ink-faint)">Bored</text>
-            <text class="zone-label" x="100" y="22" fill="var(--danger)">Stressful</text>
-            <text class="zone-label" x="15" y="140" fill="var(--care)">Cozy</text>
-            <text class="zone-label" x="100" y="140" fill="var(--breakthrough)">Breakthrough</text>
+            <rect x="10" y="10" width="85" height="65" fill="var(--care)" opacity="0.10"></rect>
+            <rect x="95" y="10" width="85" height="65" fill="var(--breakthrough)" opacity="0.14"></rect>
+            <rect x="10" y="75" width="85" height="65" fill="var(--ink-faint)" opacity="0.08"></rect>
+            <rect x="95" y="75" width="85" height="65" fill="var(--danger)" opacity="0.10"></rect>
+            <text class="zone-label" x="15" y="22" fill="var(--care)">Cozy</text>
+            <text class="zone-label" x="100" y="22" fill="var(--breakthrough)">Breakthrough</text>
+            <text class="zone-label" x="15" y="140" fill="var(--ink-faint)">Bored</text>
+            <text class="zone-label" x="100" y="140" fill="var(--danger)">Stressful</text>
             <line x1="95" y1="10" x2="95" y2="140" stroke="var(--border)" stroke-width="1"></line>
             <line x1="10" y1="75" x2="180" y2="75" stroke="var(--border)" stroke-width="1"></line>
             <text class="axis-label" x="10" y="148">low challenge &#8594; high challenge</text>
-            <text class="axis-label" x="183" y="90" transform="rotate(90 183 90)">low care &#8594; high care</text>
+            <text class="axis-label" x="188" y="140" transform="rotate(-90 188 140)">low care &#8594; high care</text>
             <circle class="quad-dot" id="quadDot" cx="52" cy="75" r="5"></circle>
           </svg>
         </div>
@@ -700,10 +737,78 @@
     }
   ];
 
+  var WIN_AT = 8;
+  var SAVE_KEY = 'moveBT.save.v1';
+
   function clamp(n){ return Math.max(0, Math.min(100, n)); }
   function makeClient(name, ptr){ return { name: name, strikes: 0, mood: 'steady', scenarioPtr: ptr % SCENARIOS.length }; }
+  function shuffled(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
 
   var state = null;
+
+  function saveGame(){
+    if(!state) return;
+    try{
+      var copy = JSON.parse(JSON.stringify(state));
+      if(copy.session){
+        copy.session.scenarioId = state.session.scenario ? state.session.scenario.id : null;
+        delete copy.session.scenario;
+      }
+      localStorage.setItem(SAVE_KEY, JSON.stringify(copy));
+    }catch(e){ /* private mode / storage full — game still playable without saves */ }
+  }
+  function loadGame(){
+    try{
+      var raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return null;
+      var s = JSON.parse(raw);
+      if(!s || typeof s.name !== 'string' || !s.stats || !s.clients || !s.day) return null;
+      if(s.session){
+        var sc = null;
+        for(var i = 0; i < SCENARIOS.length; i++){
+          if(SCENARIOS[i].id === s.session.scenarioId) sc = SCENARIOS[i];
+        }
+        if(sc){ s.session.scenario = sc; }
+        else { s.session = null; s.screen = 'hub'; }
+      }
+      return s;
+    }catch(e){ return null; }
+  }
+  function clearSave(){
+    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  }
+
+  function spawnBurst(target, n){
+    if(!target) return;
+    target.classList.add('can-burst');
+    var count = n || 12;
+    for(var i = 0; i < count; i++){
+      var dot = document.createElement('span');
+      dot.className = 'burst-dot';
+      var ang = Math.random() * Math.PI * 2;
+      var dist = 40 + Math.random() * 70;
+      dot.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(0) + 'px');
+      dot.style.setProperty('--dy', (Math.sin(ang) * dist).toFixed(0) + 'px');
+      target.appendChild(dot);
+    }
+    setTimeout(function(){
+      Array.prototype.forEach.call(target.querySelectorAll('.burst-dot'), function(d){
+        if(d.parentNode) d.parentNode.removeChild(d);
+      });
+    }, 1000);
+  }
 
   function freshState(name){
     return {
@@ -722,6 +827,8 @@
       titles: [],
       hadSetback: false,
       setbackDemotedFrom: null,
+      campaignComplete: false,
+      lastDelta: null,
       recoveryWindow: 0,
       log: [],
       screen: 'hub',
@@ -788,7 +895,7 @@
 
   function renderQuadrant(){
     var x = 10 + (state.challenge/100) * 170;
-    var y = 10 + (state.care/100) * 130;
+    var y = 140 - (state.care/100) * 130;
     el.quadDot.setAttribute('cx', x.toFixed(1));
     el.quadDot.setAttribute('cy', y.toFixed(1));
   }
@@ -864,6 +971,7 @@
     renderRank();
     renderTitles();
     renderLog();
+    saveGame();
   }
 
   /* ---------------- growth map track ---------------- */
@@ -948,6 +1056,7 @@
 
   function startSession(clientIdx){
     state.energy -= 1;
+    state.lastDelta = null;
     var client = state.clients[clientIdx];
     var scenario = SCENARIOS[client.scenarioPtr];
     client.scenarioPtr = (client.scenarioPtr + 1) % SCENARIOS.length;
@@ -964,10 +1073,11 @@
 
     el.headline.textContent = meta.label + ' — ' + meta.question;
 
+    var starLit = state.care > 50 && state.challenge > 50;
     var wheelSvg = '<svg viewBox="0 0 132 132" aria-hidden="true">' +
       '<circle class="wheel-track" cx="66" cy="66" r="46"></circle>' +
       '<g class="wheel-lm"><circle cx="66" cy="14" r="7"></circle><text x="66" y="17" text-anchor="middle">LM</text></g>' +
-      '<text class="wheel-star" id="wheelStar" x="104" y="10">★</text>' +
+      '<text class="wheel-star' + (starLit ? ' is-lit' : '') + '" id="wheelStar" x="104" y="10">★</text>' +
       STAGE_ORDER.map(function(k, i){
         var pos = { survey:[108,42], search:[108,94], design:[24,94], doit:[24,42] }[k];
         var cls = 'wheel-node' + (i < s.stageIdx ? ' is-done' : (i === s.stageIdx ? ' is-active' : ''));
@@ -983,7 +1093,16 @@
       html += '<div class="scenario-body">' + s.scenario.body + '</div>';
     }
 
-    var opts = s.scenario.stages[key];
+    if(s.stageIdx > 0 && state.lastDelta){
+      var ld = state.lastDelta;
+      html += '<div class="delta-chips">' +
+        '<span class="' + (ld.amount >= 0 ? 'up' : 'down') + '">' + STAT_LABEL[ld.stat] + ' ' + (ld.amount > 0 ? '+' : '') + ld.amount + '</span>' +
+        '<span class="' + (ld.care >= 0 ? 'up' : 'down') + '">Care ' + (ld.care > 0 ? '+' : '') + ld.care + '</span>' +
+        '<span class="' + (ld.challenge >= 0 ? 'up' : 'down') + '">Challenge ' + (ld.challenge > 0 ? '+' : '') + ld.challenge + '</span>' +
+      '</div>';
+    }
+
+    var opts = shuffled(s.scenario.stages[key]);
     html += '<p class="stage-prompt">' + meta.label + '<span class="q">' + meta.question + '</span></p>';
     html += '<div class="options">' + opts.map(function(o, i){
       return '<button type="button" class="opt" data-idx="' + i + '">' + o.text + '</button>';
@@ -1003,6 +1122,7 @@
     state.challenge = clamp(state.challenge + d.challenge);
     var amount = opt.style === 'breakthrough' ? 6 : (opt.style === 'harsh' ? -2 : -3);
     state.stats[meta.stat] = clamp(state.stats[meta.stat] + amount);
+    state.lastDelta = { stat: meta.stat, amount: amount, care: d.care, challenge: d.challenge };
 
     state.session.stageIdx++;
     if(state.session.stageIdx >= STAGE_ORDER.length){
@@ -1071,10 +1191,17 @@
     });
     var rankChanged = state.rank !== prevRank;
 
+    var justWon = false;
+    if(isHit && state.breakthroughs >= WIN_AT && !state.campaignComplete){
+      state.campaignComplete = true;
+      justWon = true;
+    }
+
     var rosterEmpty = state.clients.length === 0;
 
+    state.lastDelta = null;
     state.screen = 'sessionResult';
-    state.session.result = { q: q, isHit: isHit, clientQuitName: clientQuitName, rosterEmpty: rosterEmpty, rankChanged: rankChanged, prevRank: prevRank, note: note };
+    state.session.result = { q: q, isHit: isHit, clientQuitName: clientQuitName, rosterEmpty: rosterEmpty, rankChanged: rankChanged, prevRank: prevRank, note: note, won: justWon };
     render();
   }
 
@@ -1089,13 +1216,20 @@
     if(r.note){
       html += '<p class="result-note" style="color:var(--breakthrough);">' + r.note + '</p>';
     }
-    var label = r.rosterEmpty ? 'See what happens next' : (r.rankChanged ? 'Continue' : 'Back to the day');
+    var label = r.rosterEmpty ? 'See what happens next' : (r.won ? 'See what you\'ve built' : (r.rankChanged ? 'Continue' : 'Back to the day'));
     html += '<button type="button" class="primary-btn" id="resultNext">' + label + '</button>';
     el.mainPanel.innerHTML = html;
+
+    if(r.isHit){
+      spawnBurst(el.mainPanel.querySelector('.quad-name'));
+    }
 
     document.getElementById('resultNext').addEventListener('click', function(){
       if(r.rosterEmpty){
         triggerSetback();
+      } else if(r.won){
+        state.screen = 'win';
+        render();
       } else if(r.rankChanged){
         showRankup(r.prevRank, state.rank);
       } else {
@@ -1233,7 +1367,30 @@
       '<button type="button" class="primary-btn" id="rankupContinue">Continue</button>' +
       '</div>';
     el.mainPanel.innerHTML = html;
+    spawnBurst(el.mainPanel.querySelector('h2'), 14);
     document.getElementById('rankupContinue').addEventListener('click', goHub);
+  }
+
+  /* ---------------- screen: campaign complete ---------------- */
+
+  function renderWin(){
+    el.headline.textContent = 'Level 01 Complete';
+    var html = '<div class="takeover win">' +
+      '<div class="t-eyebrow">Growth Map &middot; Level 01 Complete</div>' +
+      '<h2>You\'ve mastered the Coach level, ' + esc(state.name) + '.</h2>' +
+      '<p>' + WIN_AT + ' breakthrough sessions. Clients who stayed, referrals who came looking for you, and a coaching style that holds care and challenge at the same time. Everything on the Growth Map past this point is built on exactly what you just practiced.</p>' +
+      '<div class="win-stats">' +
+        '<div class="ws"><b>' + state.day + '</b><span>days</span></div>' +
+        '<div class="ws"><b>' + state.breakthroughs + '</b><span>breakthroughs</span></div>' +
+        '<div class="ws"><b>' + state.clients.length + '</b><span>active clients</span></div>' +
+        '<div class="ws"><b>' + state.titles.length + '</b><span>titles earned</span></div>' +
+      '</div>' +
+      '<div class="unlock-line">Specialist, Leadership and Builder pathways &mdash; coming in a future level.</div>' +
+      '<button type="button" class="primary-btn" id="winContinue">Keep coaching</button>' +
+      '</div>';
+    el.mainPanel.innerHTML = html;
+    spawnBurst(el.mainPanel.querySelector('h2'), 20);
+    document.getElementById('winContinue').addEventListener('click', goHub);
   }
 
   /* ---------------- router ---------------- */
@@ -1247,6 +1404,7 @@
     else if(state.screen === 'train') renderTrain();
     else if(state.screen === 'setback') renderSetback();
     else if(state.screen === 'rankup') renderRankup();
+    else if(state.screen === 'win') renderWin();
   }
 
   /* ---------------- boot / reset ---------------- */
@@ -1264,11 +1422,56 @@
     beginGame(el.nameInput.value.trim());
   });
 
+  function setupContinueUI(){
+    var existing = document.getElementById('continueWrap');
+    if(existing) existing.parentNode.removeChild(existing);
+    var saved = loadGame();
+    if(!saved) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'intro-continue';
+    wrap.id = 'continueWrap';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'primary-btn';
+    btn.style.marginTop = '0';
+    btn.textContent = 'Continue as ' + saved.name + ' — Day ' + saved.day;
+    btn.addEventListener('click', function(){
+      state = saved;
+      el.introSection.style.display = 'none';
+      el.gameSection.style.display = 'block';
+      render();
+    });
+    var or = document.createElement('div');
+    or.className = 'or';
+    or.textContent = 'or start a fresh run below';
+    wrap.appendChild(btn);
+    wrap.appendChild(or);
+    el.introForm.parentNode.insertBefore(wrap, el.introForm);
+  }
+  setupContinueUI();
+
+  var resetArmed = null;
   el.resetBtn.addEventListener('click', function(){
-    el.gameSection.style.display = 'none';
-    el.introSection.style.display = 'flex';
-    el.nameInput.value = '';
-    state = null;
+    if(resetArmed){
+      clearTimeout(resetArmed);
+      resetArmed = null;
+      el.resetBtn.classList.remove('confirm');
+      el.resetBtn.textContent = 'Restart';
+      clearSave();
+      state = null;
+      el.gameSection.style.display = 'none';
+      el.introSection.style.display = 'flex';
+      el.nameInput.value = '';
+      setupContinueUI();
+    } else {
+      el.resetBtn.classList.add('confirm');
+      el.resetBtn.textContent = 'Erase save?';
+      resetArmed = setTimeout(function(){
+        resetArmed = null;
+        el.resetBtn.classList.remove('confirm');
+        el.resetBtn.textContent = 'Restart';
+      }, 4000);
+    }
   });
 })();
 </script>
