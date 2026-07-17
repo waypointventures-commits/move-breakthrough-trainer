@@ -122,9 +122,11 @@
   .avatar{
     width: 42px; height: 42px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
     color: var(--accent-ink);
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: flex-end; justify-content: center;
+    overflow: hidden;
     font-family: var(--font-display);
     font-size: 19px;
     flex: 0 0 auto;
@@ -388,7 +390,7 @@
   /* ---------- sidebar ---------- */
   .sidebar{ display: flex; flex-direction: column; gap: 16px; }
 
-  .stat-row{ display: grid; grid-template-columns: 64px 1fr 32px; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .stat-row{ display: grid; grid-template-columns: 82px 1fr 32px; align-items: center; gap: 10px; margin-bottom: 9px; }
   .stat-row:last-child{ margin-bottom: 0; }
   .stat-name{ font-size: 12.5px; color: var(--ink-dim); }
   .stat-track{ height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
@@ -491,6 +493,21 @@
   .intro-continue{ display: flex; flex-direction: column; gap: 9px; align-items: flex-start; margin-bottom: 20px; }
   .intro-continue .or{ font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
 
+  /* ---------- pixel art ---------- */
+  .px{ display: block; image-rendering: pixelated; }
+  .intro-art{ display: flex; align-items: flex-end; gap: 14px; margin-bottom: 18px; }
+  .avatar .px{ margin: 0 auto; }
+  .a-icon{ margin-bottom: 4px; }
+  .a-icon .px{ display: inline-block; }
+  .pick-btn .px, .roster-list .px{ flex: 0 0 auto; }
+  .pick-left{ display: flex; align-items: center; gap: 12px; }
+  .roster-left{ display: flex; align-items: center; gap: 9px; }
+  .session-portrait{ flex: 0 0 auto; }
+  .stat-name{ display: flex; align-items: center; gap: 7px; }
+  .stat-name .px{ display: inline-block; flex: 0 0 auto; }
+  .opt .px{ display: inline-block; vertical-align: middle; margin-right: 9px; }
+  .t-art{ display: flex; justify-content: center; margin-bottom: 12px; }
+
   @media (prefers-reduced-motion: reduce){
     *{ transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
   }
@@ -502,6 +519,7 @@
 
   <div id="introSection" class="intro-wrap">
     <div class="intro-card">
+      <div class="intro-art" id="introArt"></div>
       <div class="brand">MOVE &middot; Breakthrough Trainer</div>
       <h1>Your first day as a MOVE coach starts now.</h1>
       <p>Every day you'll have limited energy to spend &mdash; see clients through their Learnable Moments, train the values that make you a coach, or reflect and recover. Choices carry real weight: lose enough trust and a client walks. Build enough breakthroughs and you rank up the Growth Map.</p>
@@ -756,6 +774,229 @@
     });
   }
 
+  /* ---------------- pixel art ---------------- */
+
+  function pxSvg(rows, pal, cell){
+    var w = rows[0].length, h = rows.length, rects = '';
+    for(var y = 0; y < h; y++){
+      for(var x = 0; x < w; x++){
+        var c = pal[rows[y].charAt(x)];
+        if(c) rects += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + c + '"/>';
+      }
+    }
+    return '<svg class="px" viewBox="0 0 ' + w + ' ' + h + '" style="width:' + (w * cell) + 'px;height:' + (h * cell) + 'px" shape-rendering="crispEdges" aria-hidden="true">' + rects + '</svg>';
+  }
+
+  var FACE_SHORT = [
+    '....HHHH....',
+    '...HHHHHH...',
+    '...HHHHHH...',
+    '...SSSSSS...',
+    '...SESSES...',
+    '...SSSSSS...',
+    '...SSMMSS...',
+    '....SSSS....',
+    '..TTTTTTTT..',
+    '.TTTTTTTTTT.',
+    '.TTTTTTTTTT.'
+  ];
+  var FACE_LONG = [
+    '....HHHH....',
+    '...HHHHHH...',
+    '..HHHHHHHH..',
+    '..HSSSSSSH..',
+    '..HSESSESH..',
+    '..HSSSSSSH..',
+    '..HSSMMSSH..',
+    '..H.SSSS.H..',
+    '..HTTTTTTH..',
+    '.HTTTTTTTTH.',
+    '.TTTTTTTTTT.'
+  ];
+  var FACE_BUN = [
+    '.....HH.....',
+    '....HHHH....',
+    '...HHHHHH...',
+    '...SSSSSS...',
+    '...SESSES...',
+    '...SSSSSS...',
+    '...SSMMSS...',
+    '....SSSS....',
+    '..TTTTTTTT..',
+    '.TTTTTTTTTT.',
+    '.TTTTTTTTTT.'
+  ];
+  var FACE_SPIKY = [
+    '...H.HH.H...',
+    '...HHHHHH...',
+    '...HHHHHH...',
+    '...SSSSSS...',
+    '...SESSES...',
+    '...SSSSSS...',
+    '...SSMMSS...',
+    '....SSSS....',
+    '..TTTTTTTT..',
+    '.TTTTTTTTTT.',
+    '.TTTTTTTTTT.'
+  ];
+  var FACE_PLAYER = [
+    '....HHHH....',
+    '...HHHHHH...',
+    '...BBBBBB...',
+    '...SSSSSS...',
+    '...SESSES...',
+    '...SSSSSS...',
+    '...SSMMSS...',
+    '....SSSS....',
+    '..TTTTTTTT..',
+    '.TTTTTTTTTT.',
+    '.TTTTTTTTTT.'
+  ];
+  var FACE_STYLES = [FACE_SHORT, FACE_LONG, FACE_BUN, FACE_SPIKY];
+  var SKINS = [
+    { S:'#ecc19a', M:'#c98f66' },
+    { S:'#d29a6b', M:'#a86f45' },
+    { S:'#a06a42', M:'#7a4c2c' },
+    { S:'#6f4a30', M:'#503321' }
+  ];
+  var HAIRS = ['#33261a', '#1a1512', '#a85b28', '#d9b04a', '#9a8f7c', '#4fa8a0'];
+  var SHIRTS = ['#d98f3b', '#4fa8a0', '#b1503f', '#6d6656', '#5b7d8c', '#8c7a5c'];
+
+  function nameHash(s){
+    var h = 0;
+    for(var i = 0; i < s.length; i++){ h = ((h * 31) + s.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
+
+  function portraitSvg(name, cell, isPlayer){
+    var h = nameHash(name || 'Coach');
+    var skin = SKINS[(h >> 5) % SKINS.length];
+    var hair = HAIRS[(h >> 2) % HAIRS.length];
+    var shirtIdx = (h >> 7) % SHIRTS.length;
+    if(SHIRTS[shirtIdx] === hair) shirtIdx = (shirtIdx + 1) % SHIRTS.length;
+    var pal = {
+      H: hair,
+      S: skin.S, M: skin.M,
+      E: '#1d150e',
+      T: isPlayer ? '#d98f3b' : SHIRTS[shirtIdx],
+      B: '#e8c14a'
+    };
+    var rows = isPlayer ? FACE_PLAYER : FACE_STYLES[h % FACE_STYLES.length];
+    return pxSvg(rows, pal, cell);
+  }
+
+  var ICON_CLIENT = [
+    '..AA....CC..',
+    '..AA....CC..',
+    '.AAAA..CCCC.',
+    '.AAAA..CCCC.',
+    '.AAAA..CCCC.',
+    '.AAAA..CCCC.'
+  ];
+  var ICON_TRAIN = [
+    '.WW......WW.',
+    '.WW......WW.',
+    '.WWGGGGGGWW.',
+    '.WWGGGGGGWW.',
+    '.WW......WW.',
+    '.WW......WW.'
+  ];
+  var ICON_REFLECT = [
+    '....Z..Z....',
+    '...Z..Z.....',
+    '....Z..Z....',
+    '............',
+    '..MMMMMM....',
+    '..MMMMMMMM..',
+    '..MMMMMM.M..',
+    '..MMMMMM.M..',
+    '..MMMMMMMM..',
+    '..MMMMMM....'
+  ];
+  var ART_TROPHY = [
+    '.GGGGGGGGGG.',
+    'G.GGGGGGGG.G',
+    'G.GGWGGGGG.G',
+    'G.GGGGGGGG.G',
+    '.G.GGGGGG.G.',
+    '...GGGGGG...',
+    '....GGGG....',
+    '.....GG.....',
+    '.....GG.....',
+    '....GGGG....',
+    '..GGGGGGGG..',
+    '..GGGGGGGG..'
+  ];
+  var ART_CLOUD = [
+    '....CCC.....',
+    '..CCCCCCC...',
+    '.CCCCCCCCC..',
+    '.CCCCCCCCCC.',
+    '..CCCCCCCC..',
+    '............',
+    '..R...R..R..',
+    '..R...R..R..'
+  ];
+  var ART_ARROW = [
+    '.....GG.....',
+    '....GGGG....',
+    '...GGGGGG...',
+    '..GGGGGGGG..',
+    '.GGGGGGGGGG.',
+    '....GGGG....',
+    '....GGGG....',
+    '....GGGG....',
+    '....GGGG....'
+  ];
+  var STAT_ICONS = {
+    heart: [
+      '.HH..HH.',
+      'HHHHHHHH',
+      'HHHHHHHH',
+      '.HHHHHH.',
+      '..HHHH..',
+      '...HH...'
+    ],
+    hungry: [
+      '...F....',
+      '..FF....',
+      '..FFF...',
+      '.FFFFF..',
+      '.FFYFF..',
+      '.FYYYF..',
+      '..YYY...'
+    ],
+    humble: [
+      '.LL...LL.',
+      'LLLL.LLLL',
+      '.LLLNLLL.',
+      '....N....',
+      '....N....'
+    ],
+    honest: [
+      '......CC',
+      '.....CC.',
+      'CC..CC..',
+      '.CCCC...',
+      '..CC....'
+    ],
+    happy: [
+      '.Y.YY.Y.',
+      '..YYYY..',
+      '.YYYYYY.',
+      '.YYYYYY.',
+      '..YYYY..',
+      '.Y.YY.Y.'
+    ]
+  };
+  var ICON_PAL = {
+    A:'#d98f3b', C:'#4fa8a0', W:'#f3ede1', G:'#d98f3b', Z:'#6d6656', M:'#4fa8a0',
+    R:'#4fa8a0', H:'#b1503f', F:'#d98f3b', Y:'#e8c14a', L:'#4fa8a0', N:'#8c7a5c'
+  };
+  var ART_PAL = { G:'#e8c14a', W:'#fdf6dd', C:'#6d6656', R:'#4fa8a0' };
+
+  function statIcon(k, cell){ return pxSvg(STAT_ICONS[k], ICON_PAL, cell || 1.6); }
+
   var state = null;
 
   function saveGame(){
@@ -870,7 +1111,7 @@
   /* ---------------- sidebar rendering ---------------- */
 
   function renderHeader(){
-    el.avatarEl.textContent = state.name.trim().charAt(0).toUpperCase() || 'C';
+    el.avatarEl.innerHTML = portraitSvg(state.name, 3.5, true);
     el.pNameEl.textContent = state.name;
     el.pRankEl.textContent = state.rank;
     el.pDayEl.textContent = 'Day ' + state.day + ' · ';
@@ -886,7 +1127,7 @@
     el.statRows.innerHTML = STATS.map(function(k){
       var v = Math.round(state.stats[k]);
       return '<div class="stat-row">' +
-        '<div class="stat-name">' + STAT_LABEL[k] + '</div>' +
+        '<div class="stat-name">' + statIcon(k, 1.6) + STAT_LABEL[k] + '</div>' +
         '<div class="stat-track"><div class="stat-fill" style="width:' + v + '%"></div></div>' +
         '<div class="stat-val">' + v + '</div>' +
       '</div>';
@@ -913,7 +1154,7 @@
     }
     el.rosterList.innerHTML = state.clients.map(function(c){
       var m = moodLabel(c);
-      return '<li><span class="r-name">' + c.name + '</span><span class="mood ' + m.key + '">' + m.text + '</span></li>';
+      return '<li><span class="roster-left">' + portraitSvg(c.name, 2) + '<span class="r-name">' + c.name + '</span></span><span class="mood ' + m.key + '">' + m.text + '</span></li>';
     }).join('');
   }
 
@@ -1010,14 +1251,17 @@
     html += '<div class="day-line"><h2>Today\'s Board</h2><div class="energy-caption">' + state.energy + ' / ' + MAX_ENERGY + ' energy left</div></div>';
     html += '<div class="action-grid">';
     html += '<button type="button" class="action-card" id="actClient" ' + (canClient ? '' : 'disabled') + '>' +
+      '<div class="a-icon">' + pxSvg(ICON_CLIENT, ICON_PAL, 2.5) + '</div>' +
       '<div class="a-title">See a Client</div>' +
       '<div class="a-desc">Run a Breakthrough Wheel session with someone on your roster.</div>' +
       '<div class="a-cost">Cost: 1 energy</div></button>';
     html += '<button type="button" class="action-card" id="actTrain" ' + (canTrain ? '' : 'disabled') + '>' +
+      '<div class="a-icon">' + pxSvg(ICON_TRAIN, ICON_PAL, 2.5) + '</div>' +
       '<div class="a-title">Train a Value</div>' +
       '<div class="a-desc">Drill one of the 5H on your own time. Builds the stat, but costs balance.</div>' +
       '<div class="a-cost">Cost: 1 energy</div></button>';
     html += '<button type="button" class="action-card" id="actReflect" ' + (canReflect ? '' : 'disabled') + '>' +
+      '<div class="a-icon">' + pxSvg(ICON_REFLECT, ICON_PAL, 2.5) + '</div>' +
       '<div class="a-title">Reflect</div>' +
       '<div class="a-desc">Name what is actually going on. Pulls Care &amp; Challenge back toward center.</div>' +
       '<div class="a-cost">Cost: free, once per day</div></button>';
@@ -1043,7 +1287,7 @@
     var html = '<button type="button" class="back-link" id="backHub">&larr; Back to the day</button>';
     html += '<div class="pick-list">' + state.clients.map(function(c, i){
       var m = moodLabel(c);
-      return '<button type="button" class="pick-btn" data-idx="' + i + '"><span class="p-name">' + c.name + '</span><span class="mood ' + m.key + '">' + m.text + '</span></button>';
+      return '<button type="button" class="pick-btn" data-idx="' + i + '"><span class="pick-left">' + portraitSvg(c.name, 3) + '<span class="p-name">' + c.name + '</span></span><span class="mood ' + m.key + '">' + m.text + '</span></button>';
     }).join('') + '</div>';
     el.mainPanel.innerHTML = html;
     document.getElementById('backHub').addEventListener('click', goHub);
@@ -1086,6 +1330,7 @@
       '</svg>';
 
     var html = '<div class="scenario-top"><div class="wheel-wrap">' + wheelSvg + '</div>' +
+      '<div class="session-portrait">' + portraitSvg(client.name, 5) + '</div>' +
       '<div class="scenario-meta"><p class="eyebrow">' + meta.label + '</p><h2>' + s.scenario.title + '</h2>' +
       '<div class="client-tag">Client: ' + client.name + '</div></div></div>';
 
@@ -1249,7 +1494,7 @@
     el.headline.textContent = 'Which value are you drilling today?';
     var html = '<button type="button" class="back-link" id="backHub">&larr; Back to the day</button>';
     html += '<div class="options">' + STATS.map(function(k){
-      return '<button type="button" class="opt" data-stat="' + k + '">Train ' + STAT_LABEL[k] + '</button>';
+      return '<button type="button" class="opt" data-stat="' + k + '">' + statIcon(k, 2) + 'Train ' + STAT_LABEL[k] + '</button>';
     }).join('') + '</div>';
     el.mainPanel.innerHTML = html;
     document.getElementById('backHub').addEventListener('click', goHub);
@@ -1339,6 +1584,7 @@
   function renderSetback(){
     el.headline.textContent = 'Performance Review';
     var html = '<div class="takeover setback">' +
+      '<div class="t-art">' + pxSvg(ART_CLOUD, ART_PAL, 5) + '</div>' +
       '<div class="t-eyebrow">Roster Empty</div>' +
       '<h2>Every client on your books just walked.</h2>' +
       '<p>Your manager sits you down. Losing a whole roster in this stretch is not bad luck, it is a pattern &mdash; challenge without enough care behind it, over and over. ' + (state.setbackDemotedFrom ? 'You are being moved back from ' + state.setbackDemotedFrom + ' to ' + state.rank + ' rank while you rebuild trust.' : 'You are staying at ' + state.rank + ' rank while you rebuild trust.') + '</p>' +
@@ -1360,6 +1606,7 @@
     var unlocked = d.newRank === 'Senior' ? CRAFT_SKILLS.slice(1,3) : CRAFT_SKILLS.slice(3,4);
     el.headline.textContent = 'Rank Up';
     var html = '<div class="takeover rankup">' +
+      '<div class="t-art">' + pxSvg(ART_ARROW, ART_PAL, 5) + '</div>' +
       '<div class="t-eyebrow">Coach Rank</div>' +
       '<h2>' + d.prevRank + ' → ' + d.newRank + '</h2>' +
       '<p>The breakthroughs are adding up. You are coaching like someone who has actually earned the next rank on the Growth Map.</p>' +
@@ -1376,6 +1623,7 @@
   function renderWin(){
     el.headline.textContent = 'Level 01 Complete';
     var html = '<div class="takeover win">' +
+      '<div class="t-art">' + pxSvg(ART_TROPHY, ART_PAL, 6) + '</div>' +
       '<div class="t-eyebrow">Growth Map &middot; Level 01 Complete</div>' +
       '<h2>You\'ve mastered the Coach level, ' + esc(state.name) + '.</h2>' +
       '<p>' + WIN_AT + ' breakthrough sessions. Clients who stayed, referrals who came looking for you, and a coaching style that holds care and challenge at the same time. Everything on the Growth Map past this point is built on exactly what you just practiced.</p>' +
@@ -1449,6 +1697,12 @@
     el.introForm.parentNode.insertBefore(wrap, el.introForm);
   }
   setupContinueUI();
+
+  document.getElementById('introArt').innerHTML =
+    portraitSvg('Coach', 5, true) +
+    portraitSvg(CLIENT_SEED_NAMES[0], 4) +
+    portraitSvg(CLIENT_SEED_NAMES[1], 4) +
+    portraitSvg(CLIENT_SEED_NAMES[2], 4);
 
   var resetArmed = null;
   el.resetBtn.addEventListener('click', function(){
