@@ -508,6 +508,27 @@
   .opt .px{ display: inline-block; vertical-align: middle; margin-right: 9px; }
   .t-art{ display: flex; justify-content: center; margin-bottom: 12px; }
 
+  .scene-row{ display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin: 14px 0 18px; }
+  .scene-row .scenario-body{ margin: 0; flex: 1; min-width: 220px; }
+  .scene-art{
+    flex: 0 0 auto;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  .result-top{ display: flex; gap: 16px; align-items: center; margin-bottom: 8px; }
+  .result-top .quad-name{ margin: 0; }
+
+  @keyframes bob{ to{ transform: translateY(-3px); } }
+  .intro-art .px{ animation: bob 1.5s ease-in-out infinite alternate; }
+  .intro-art .px:nth-child(2){ animation-delay: .25s; }
+  .intro-art .px:nth-child(3){ animation-delay: .5s; }
+  .intro-art .px:nth-child(4){ animation-delay: .75s; }
+  .t-art .px{ animation: bob 2s ease-in-out infinite alternate; }
+  .wheel-star.is-lit{ animation: twinkle 1.1s ease-in-out infinite alternate; }
+  @keyframes twinkle{ from{ opacity: .55; } to{ opacity: 1; } }
+
   @media (prefers-reduced-motion: reduce){
     *{ transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
   }
@@ -868,7 +889,26 @@
     return Math.abs(h);
   }
 
-  function portraitSvg(name, cell, isPlayer){
+  function moodifyFace(rows, mood){
+    if(!mood || mood === 'steady') return rows;
+    return rows.map(function(r, i){
+      var out = r;
+      if(mood === 'thriving' && out.indexOf('SSMMSS') !== -1){
+        out = out.replace('SSMMSS', 'SMMMMS');
+      }
+      if(mood === 'shaky' || mood === 'critical'){
+        if(mood === 'critical' && out.indexOf('SSMMSS') !== -1){
+          out = out.replace('SSMMSS', 'SMSSMS');
+        }
+        if((i === 3 || i === 4) && out.charAt(10) === '.'){
+          out = out.slice(0, 10) + 'D' + out.slice(11);
+        }
+      }
+      return out;
+    });
+  }
+
+  function portraitSvg(name, cell, isPlayer, mood){
     var h = nameHash(name || 'Coach');
     var skin = SKINS[(h >> 5) % SKINS.length];
     var hair = HAIRS[(h >> 2) % HAIRS.length];
@@ -879,10 +919,17 @@
       S: skin.S, M: skin.M,
       E: '#1d150e',
       T: isPlayer ? '#d98f3b' : SHIRTS[shirtIdx],
-      B: '#e8c14a'
+      B: '#e8c14a',
+      D: '#4fa8a0'
     };
     var rows = isPlayer ? FACE_PLAYER : FACE_STYLES[h % FACE_STYLES.length];
-    return pxSvg(rows, pal, cell);
+    return pxSvg(moodifyFace(rows, mood), pal, cell);
+  }
+
+  function moodKeyFor(c){
+    if(c.strikes >= 2) return 'critical';
+    if(c.strikes >= 1) return 'shaky';
+    return c.mood === 'thriving' ? 'thriving' : 'steady';
   }
 
   var ICON_CLIENT = [
@@ -989,6 +1036,74 @@
       '.Y.YY.Y.'
     ]
   };
+  var SCENE_PHONE = [
+    '.OOOOOOOOOO.',
+    'OKKKKKKKKKKO',
+    'OK.GGGG...KO',
+    'OK........KO',
+    'OK...AAAA.KO',
+    'OK........KO',
+    'OK.GGGG...KO',
+    'OK........KO',
+    'OK...AAAA.KO',
+    'OK........KO',
+    'OK.RRRR...KO',
+    'OK........KO',
+    'OKKKKKKKKKKO',
+    '.OOOOOOOOOO.'
+  ];
+  var SCENE_MONITOR = [
+    'OOOOOOOOOOOOOOOO',
+    'OKKKKKKKKKKKKKKO',
+    'OKKKKKKKKKKKRRKO',
+    'OKKKKPKKKKKKKKKO',
+    'OKKKKPPKKKKKKKKO',
+    'OKKKKPPPKKKKKKKO',
+    'OKKKKPPPKKKKKKKO',
+    'OKKKKPPKKKKKKKKO',
+    'OKKKKPKKKKKKKKKO',
+    'OKKKKKKKKKKKKKKO',
+    'OOOOOOOOOOOOOOOO',
+    '......OOOO......',
+    '....OOOOOOOO....'
+  ];
+  var SCENE_BARS = [
+    '..........W.....',
+    '.........WWW....',
+    '..........W.....',
+    '........GGGG....',
+    '........GGGG....',
+    '........GGGG....',
+    '........GGGG....',
+    '..AAAA..GGGG....',
+    '..AAAA..GGGG....',
+    '..AAAA..GGGG....',
+    '..AAAA..GGGG....',
+    'FFFFFFFFFFFFFFFF'
+  ];
+  var SCENE_CHART = [
+    'Y...............',
+    'Y...............',
+    'Y...............',
+    'Y......CC.......',
+    'YCCCCCC..CCCCCCC',
+    'Y...............',
+    'Y...............',
+    'Y...............',
+    'Y...............',
+    'YYYYYYYYYYYYYYYY'
+  ];
+  var SCENE_ART = {
+    'vanishing-client': SCENE_PHONE,
+    'feedback-that-stung': SCENE_MONITOR,
+    'comparison-trap': SCENE_BARS,
+    'the-plateau': SCENE_CHART
+  };
+  var SCENE_PAL = {
+    O:'#8c7a5c', K:'#161310', G:'#6d6656', A:'#d98f3b', R:'#b1503f',
+    P:'#e8c14a', W:'#fdf6dd', F:'#6d6656', Y:'#6d6656', C:'#4fa8a0'
+  };
+
   var ICON_PAL = {
     A:'#d98f3b', C:'#4fa8a0', W:'#f3ede1', G:'#d98f3b', Z:'#6d6656', M:'#4fa8a0',
     R:'#4fa8a0', H:'#b1503f', F:'#d98f3b', Y:'#e8c14a', L:'#4fa8a0', N:'#8c7a5c'
@@ -1111,7 +1226,7 @@
   /* ---------------- sidebar rendering ---------------- */
 
   function renderHeader(){
-    el.avatarEl.innerHTML = portraitSvg(state.name, 3.5, true);
+    el.avatarEl.innerHTML = portraitSvg(state.name, 3.5, true, state.stats.happy >= 70 ? 'thriving' : (state.stats.happy <= 30 ? 'shaky' : 'steady'));
     el.pNameEl.textContent = state.name;
     el.pRankEl.textContent = state.rank;
     el.pDayEl.textContent = 'Day ' + state.day + ' · ';
@@ -1154,7 +1269,7 @@
     }
     el.rosterList.innerHTML = state.clients.map(function(c){
       var m = moodLabel(c);
-      return '<li><span class="roster-left">' + portraitSvg(c.name, 2) + '<span class="r-name">' + c.name + '</span></span><span class="mood ' + m.key + '">' + m.text + '</span></li>';
+      return '<li><span class="roster-left">' + portraitSvg(c.name, 2, false, moodKeyFor(c)) + '<span class="r-name">' + c.name + '</span></span><span class="mood ' + m.key + '">' + m.text + '</span></li>';
     }).join('');
   }
 
@@ -1287,7 +1402,7 @@
     var html = '<button type="button" class="back-link" id="backHub">&larr; Back to the day</button>';
     html += '<div class="pick-list">' + state.clients.map(function(c, i){
       var m = moodLabel(c);
-      return '<button type="button" class="pick-btn" data-idx="' + i + '"><span class="pick-left">' + portraitSvg(c.name, 3) + '<span class="p-name">' + c.name + '</span></span><span class="mood ' + m.key + '">' + m.text + '</span></button>';
+      return '<button type="button" class="pick-btn" data-idx="' + i + '"><span class="pick-left">' + portraitSvg(c.name, 3, false, moodKeyFor(c)) + '<span class="p-name">' + c.name + '</span></span><span class="mood ' + m.key + '">' + m.text + '</span></button>';
     }).join('') + '</div>';
     el.mainPanel.innerHTML = html;
     document.getElementById('backHub').addEventListener('click', goHub);
@@ -1330,12 +1445,15 @@
       '</svg>';
 
     var html = '<div class="scenario-top"><div class="wheel-wrap">' + wheelSvg + '</div>' +
-      '<div class="session-portrait">' + portraitSvg(client.name, 5) + '</div>' +
+      '<div class="session-portrait">' + portraitSvg(client.name, 5, false, moodKeyFor(client)) + '</div>' +
       '<div class="scenario-meta"><p class="eyebrow">' + meta.label + '</p><h2>' + s.scenario.title + '</h2>' +
       '<div class="client-tag">Client: ' + client.name + '</div></div></div>';
 
     if(s.stageIdx === 0){
-      html += '<div class="scenario-body">' + s.scenario.body + '</div>';
+      var scene = SCENE_ART[s.scenario.id];
+      html += '<div class="scene-row">' +
+        (scene ? '<div class="scene-art">' + pxSvg(scene, SCENE_PAL, 4) + '</div>' : '') +
+        '<div class="scenario-body">' + s.scenario.body + '</div></div>';
     }
 
     if(s.stageIdx > 0 && state.lastDelta){
@@ -1446,14 +1564,16 @@
 
     state.lastDelta = null;
     state.screen = 'sessionResult';
-    state.session.result = { q: q, isHit: isHit, clientQuitName: clientQuitName, rosterEmpty: rosterEmpty, rankChanged: rankChanged, prevRank: prevRank, note: note, won: justWon };
+    state.session.result = { q: q, isHit: isHit, clientName: client.name, clientQuitName: clientQuitName, rosterEmpty: rosterEmpty, rankChanged: rankChanged, prevRank: prevRank, note: note, won: justWon };
     render();
   }
 
   function renderSessionResult(){
     var r = state.session.result;
     el.headline.textContent = 'Resolution';
-    var html = '<div class="quad-name ' + r.q.key + '">' + r.q.name + ' <span style="font-size:14px; color:var(--ink-faint); font-style:normal;">(' + r.q.sub + ')</span></div>';
+    var reaction = r.isHit ? 'thriving' : (r.q.key === 'cozy' ? 'steady' : (r.clientQuitName ? 'critical' : 'shaky'));
+    var html = '<div class="result-top">' + portraitSvg(r.clientName, 4.5, false, reaction) +
+      '<div class="quad-name ' + r.q.key + '">' + r.q.name + ' <span style="font-size:14px; color:var(--ink-faint); font-style:normal;">(' + r.q.sub + ')</span></div></div>';
     html += '<p class="result-text">' + r.q.desc + '</p>';
     if(r.clientQuitName){
       html += '<p class="result-note">' + r.clientQuitName + ' has ended coaching with you.</p>';
